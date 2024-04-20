@@ -21,7 +21,7 @@ static const Worker_T INVALID_ID = (unsigned int)-1;
 
 
 // Add prototypes for any helper functions here
-bool findSchedule(size_t dayIndex,const AvailabilityMatrix& avail, size_t dailyNeed, size_t maxShifts, DailySchedule& sched, vector<size_t>& shiftsCount);
+bool findSchedule(size_t dayIndex, const AvailabilityMatrix& avail, size_t dailyNeed, size_t maxShifts, DailySchedule& sched, std::vector<size_t>& shiftsCount);
 
 
 // Add your implementation of schedule() and other helper functions here
@@ -56,8 +56,8 @@ bool schedule(
 
     size_t n = avail.size();  // Number of days
     size_t k = avail[0].size();  // Number of workers
-    sched.resize(n, vector<Worker_T>(dailyNeed, INVALID_ID));
-    vector<size_t> shiftsCount(k, 0);  // Track number of shifts for each worker
+    sched.resize(n, std::vector<Worker_T>(dailyNeed, INVALID_ID));
+    std::vector<size_t> shiftsCount(k, 0);  // Track number of shifts for each worker
 
     return findSchedule(0, avail, dailyNeed, maxShifts, sched, shiftsCount);
 
@@ -65,14 +65,14 @@ bool schedule(
 
 
 }
-bool findSchedule(size_t dayIndex, const AvailabilityMatrix& avail, size_t dailyNeed, size_t maxShifts, DailySchedule& sched, vector<size_t>& shiftsCount) {
+bool findSchedule(size_t dayIndex, const AvailabilityMatrix& avail, size_t dailyNeed, size_t maxShifts, DailySchedule& sched, std::vector<size_t>& shiftsCount) {
     if (dayIndex == avail.size()) {
         return true;  // All days have been scheduled successfully
     }
 
     const size_t k = avail[dayIndex].size();
-    vector<Worker_T>& today = sched[dayIndex];
-    vector<Worker_T> candidates;
+    std::vector<Worker_T>& today = sched[dayIndex];
+    std::vector<Worker_T> candidates;
 
     // Collect all available workers for today who have not exceeded maxShifts
     for (size_t i = 0; i < k; ++i) {
@@ -85,7 +85,7 @@ bool findSchedule(size_t dayIndex, const AvailabilityMatrix& avail, size_t daily
         return false;  // Not enough candidates to meet daily need
     }
 
-    vector<bool> select(candidates.size(), false);
+    std::vector<bool> select(candidates.size(), false);
     fill(select.end() - dailyNeed, select.end(), true);
 
     do {
@@ -111,13 +111,13 @@ bool findSchedule(size_t dayIndex, const AvailabilityMatrix& avail, size_t daily
             if (worker < shiftsCount.size()) { // Ensure we are within bounds
                 shiftsCount[worker]--;
             } else {
-                cerr << "Error: Worker index out of bounds. Worker index: " << worker << ", shiftsCount size: " << shiftsCount.size() << endl;
+                std::cerr << "Error: Worker index out of bounds. Worker index: " << worker << ", shiftsCount size: " << shiftsCount.size() << std::endl;
                 // Handle the error appropriately
             }
         }
         today.clear();
 
-    } while (next_permutation(select.begin(), select.end()));
+    } while (std::next_permutation(select.begin(), select.end()));
 
     return false;
 }
