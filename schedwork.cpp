@@ -21,9 +21,8 @@ static const Worker_T INVALID_ID = (unsigned int)-1;
 
 
 // Add prototypes for any helper functions here
-bool findSchedule(size_t dayIndex, const AvailabilityMatrix& avail, size_t dailyNeed, size_t maxShifts, DailySchedule& sched, std::vector<size_t>& shiftsCount);
-
-
+bool backtrack(size_t day, DailySchedule& sched, const AvailabilityMatrix& avail, size_t dailyNeed, size_t maxShifts, vector<size_t>& shiftsCount);
+bool findCombination(size_t start, size_t selected, size_t need, size_t day, DailySchedule& sched, const AvailabilityMatrix& avail, size_t maxShifts, vector<size_t>& shiftsCount, const vector<Worker_T>& possibleWorkers);
 // Add your implementation of schedule() and other helper functions here
 
 bool schedule(
@@ -59,65 +58,39 @@ bool schedule(
     sched.resize(n, std::vector<Worker_T>(dailyNeed, INVALID_ID));
     std::vector<size_t> shiftsCount(k, 0);  // Track number of shifts for each worker
 
-    return findSchedule(0, avail, dailyNeed, maxShifts, sched, shiftsCount);
+    return backtrack(0, sched, avail, dailyNeed, maxShifts, shiftsCount);
 
 
 
 
 }
-bool findSchedule(size_t dayIndex, const AvailabilityMatrix& avail, size_t dailyNeed, size_t maxShifts, DailySchedule& sched, std::vector<size_t>& shiftsCount) {
-    if (dayIndex == avail.size()) {
-        return true;  // All days have been scheduled successfully
-    }
+bool backtrack(size_t day, DailySchedule& sched, const AvailabilityMatrix& avail, size_t dailyNeed, size_t maxShifts, vector<size_t>& shiftsCount) {
+    if (day == avail.size()) return true;
 
-    const size_t k = avail[dayIndex].size();
-    std::vector<Worker_T>& today = sched[dayIndex];
-    std::vector<Worker_T> candidates;
-
-    // Collect all available workers for today who have not exceeded maxShifts
-    for (size_t i = 0; i < k; ++i) {
-        if (avail[dayIndex][i] && shiftsCount[i] < maxShifts) {
-            candidates.push_back(i);
+    vector<Worker_T> possibleWorkers;
+    for (size_t worker = 0; worker < avail[day].size(); ++worker) {
+        if (avail[day][worker] && shiftsCount[worker] < maxShifts) {
+            possibleWorkers.push_back(worker);
         }
     }
 
-    if (candidates.size() < dailyNeed) {
-        return false;  // Not enough candidates to meet daily need
+    return findCombination(0, 0, dailyNeed, day, sched, avail, maxShifts, shiftsCount, possibleWorkers);
+}
+
+bool findCombination(size_t start, size_t selected, size_t need, size_t day, DailySchedule& sched, const AvailabilityMatrix& avail, size_t maxShifts, vector<size_t>& shiftsCount, const vector<Worker_T>& possibleWorkers) {
+    if (selected == need) {
+        return backtrack(day + 1, sched, avail, need, maxShifts, shiftsCount);
     }
 
-    std::vector<bool> select(candidates.size(), false);
-    fill(select.end() - dailyNeed, select.end(), true);
-
-    do {
-        today.clear();
-        bool valid = true;
-        for (size_t i = 0; i < select.size(); ++i) {
-            if (select[i]) {
-                today.push_back(candidates[i]);
-                shiftsCount[candidates[i]]++;
-                if (shiftsCount[candidates[i]] > maxShifts) {
-                    valid = false;
-                    break;
-                }
-            }
-        }
-
-        if (valid && findSchedule(dayIndex + 1, avail, dailyNeed, maxShifts, sched, shiftsCount)) {
+    for (size_t i = start; i < possibleWorkers.size(); ++i) {
+        Worker_T worker = possibleWorkers[i];
+        sched[day][selected] = worker;
+        ++shiftsCount[worker];
+        if (shiftsCount[worker] <= maxShifts && findCombination(i + 1, selected + 1, need, day, sched, avail, maxShifts, shiftsCount, possibleWorkers)) {
             return true;
         }
-
-        // Undo the changes if not valid or solution not found
-        for (Worker_T worker : today) {
-            if (worker < shiftsCount.size()) { // Ensure we are within bounds
-                shiftsCount[worker]--;
-            } else {
-                std::cerr << "Error: Worker index out of bounds. Worker index: " << worker << ", shiftsCount size: " << shiftsCount.size() << std::endl;
-                // Handle the error appropriately
-            }
-        }
-        today.clear();
-
-    } while (std::next_permutation(select.begin(), select.end()));
+        --shiftsCount[worker];
+    }
 
     return false;
 }
