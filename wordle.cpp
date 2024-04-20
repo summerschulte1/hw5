@@ -14,7 +14,7 @@ using namespace std;
 
 
 // Add prototypes of helper functions here
-void generateWords(const std::string& in, const std::string& floating, std::set<std::string>& results, const std::set<std::string>& dict, std::string current, int idx, std::vector<bool>& used);
+void generateWords(const std::string& in, const std::string& floating, std::set<std::string>& results, const std::set<std::string>& dict, std::string current, int idx, std::vector<bool>& used,int usedCount);
 
 
 // Definition of primary wordle function
@@ -25,21 +25,15 @@ std::set<std::string> wordle(
 {
     std::set<std::string> results; //results for strings
     std::vector<bool> used(floating.size(), false); // track usage of floating letters
-    generateWords(in, floating, results, dict, "", 0, used);
+    generateWords(in, floating, results, dict, "", 0, used,0);
     return results;
 
 }
 // Recursive helper function to generate all combinations of words meeting the criteria
-void generateWords(const std::string& in, const std::string& floating, std::set<std::string>& results, const std::set<std::string>& dict, std::string current, int idx, std::vector<bool>& used) {
+void generateWords(const std::string& in, const std::string& floating, std::set<std::string>& results, const std::set<std::string>& dict, std::string current, int idx, std::vector<bool>& used,int usedCount) {
     if (idx == in.size()) {
-        // If we've built a word of the required length, check if it's valid
-        if (dict.find(current) != dict.end()) {
-            // Check all floating letters were used
-            bool allUsed = true;
-            for (bool u : used) {
-                if (!u) allUsed = false; 
-            }
-            if (allUsed) results.insert(current); //if all the floatings were all used, then we insert it 
+        if (dict.find(current) != dict.end() && usedCount == static_cast<int>(floating.size())) {
+            results.insert(current);
         }
         return;
     }
@@ -47,21 +41,23 @@ void generateWords(const std::string& in, const std::string& floating, std::set<
     if (in[idx] != '-') {
         // Fixed position, use the given letter and continue
         //current is the index were inserting into
-        generateWords(in, floating, results, dict, current + in[idx], idx + 1, used); //we skip that index
+        generateWords(in, floating, results, dict, current + in[idx], idx + 1, used,usedCount); //we skip that index
     } else {
         // Try every floating letter that has not been used yet
         for (size_t i = 0; i < floating.size(); ++i) {
             if (!used[i]) { //if the letter hasnt been used yet
                 used[i] = true;
-                generateWords(in, floating, results, dict, current + floating[i], idx + 1, used); //now we use the floating letter at th
+                generateWords(in, floating, results, dict, current + floating[i], idx + 1, used,usedCount + 1); //now we use the floating letter at th
                 used[i] = false; // Backtrack after doing all the other options
             }
         }
+                // Try every letter from 'a' to 'z' only if all floating letters haven't been used yet
+        if (usedCount < static_cast<int>(floating.size())) {
+            return;
+        }
         // Try every letter from 'a' to 'z'
         for (char c = 'a'; c <= 'z'; ++c) {
-            generateWords(in, floating, results, dict, current + c, idx + 1, used);
+            generateWords(in, floating, results, dict, current + c, idx + 1, used, usedCount);
         }
     }
 }
-
-
