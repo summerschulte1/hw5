@@ -51,10 +51,6 @@ void generateWords(const std::string& in, const std::string& floating, std::set<
                 used[i] = false; // Backtrack after doing all the other options
             }
         }
-                // Try every letter from 'a' to 'z' only if all floating letters haven't been used yet
-        if (usedCount < static_cast<int>(floating.size())) {
-            return;
-        }
         // Try every letter from 'a' to 'z'
         for (char c = 'a'; c <= 'z'; ++c) {
             generateWords(in, floating, results, dict, current + c, idx + 1, used, usedCount);
